@@ -203,8 +203,8 @@ RUN \
 # Add services.
 RUN mkdir /etc/service/nginx
 ADD nginx.sh /etc/service/nginx/run
-RUN mkdir /etc/service/php5-fpm && mkdir /var/log/php5-fpm
-ADD php5-fpm.sh /etc/service/php5-fpm/run
+RUN mkdir /etc/service/php7.1-fpm && mkdir /var/log/php7.1-fpm
+ADD php7.1-fpm.sh /etc/service/php7.1-fpm/run
 #RUN mkdir /etc/service/mariadb
 #ADD mariadb.sh /etc/service/mariadb/run
 
