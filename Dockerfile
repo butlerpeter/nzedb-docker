@@ -3,10 +3,10 @@
 #
 
 # Use baseimage-docker
-FROM phusion/baseimage:0.9.13
+FROM phusion/baseimage:0.10.1
 
 # Set maintainer
-MAINTAINER paulbarrett <https://github.com/paultbarrett/nzedb-docker>
+MAINTAINER butlerpeter <https://github.com/butlerpeter/nzedb-docker>
 
 # Set correct environment variables.
 ENV TZ Europe/London
@@ -49,10 +49,82 @@ RUN \
 # Install base software.
 RUN apt-get install -y curl git htop man htop nmon vnstat tcptrack bwm-ng mytop software-properties-common python-software-properties unzip vim wget tmux ntp ntpdate time
 
+# Install PHP.
+RUN \
+  add-apt-repository ppa:ondrej/php && \
+  apt-get update && \
+  apt-get install -y \
+  php7.1 \
+  php7.1-cli \
+  php7.1-common \
+  php7.1-curl \
+  php7.1-dev \
+  php7.1-fpm \
+  php7.1-gd \
+  php7.1-json \
+  php-pear \
+  php7.1-mysql \
+  php7.1-pdo \
+  php7.1-mcrypt \
+  php7.1-mbstring \
+  php7.1-xml \
+  php7.1-imagick
+
+
+# Configure PHP
+RUN \
+  sed -ri 's/(max_execution_time =) ([0-9]+)/\1 120/' /etc/php/7.1/cli/php.ini && \
+  sed -ri 's/(memory_limit =) ([0-9]+)/\1 -1/'  /etc/php/7.1/cli/php.ini && \
+  sed -ri 's/;(date.timezone =)/\1 Europe\/London/'  /etc/php/7.1/cli/php.ini && \
+  sed -ri 's/(max_execution_time =) ([0-9]+)/\1 120/' /etc/php/7.1/fpm/php.ini && \
+  sed -ri 's/(memory_limit =) ([0-9]+)/\1 1024/'  /etc/php/7.1/fpm/php.ini && \
+  sed -ri 's/;(date.timezone =)/\1 Europe\/London/' /etc/php/7.1/fpm/php.ini && \
+  mkdir /run/php && \
+  chmod -R 777 /var/lib/php/sessions && \
+  sed -i 's/^listen =.*/listen = 127.0.0.1:9000/' /etc/php/7.1/fpm/pool.d/www.conf
+
+
 # Install ffmpeg, mediainfo, p7zip-full, unrar and lame.
 RUN \
-  curl http://ffmpeg.gusari.org/static/64bit/ffmpeg.static.64bit.latest.tar.gz | tar xfvz - -C /usr/local/bin && \
-  apt-get install -y unrar-free lame mediainfo p7zip-full
+#  curl https://johnvansickle.com/ffmpeg/builds/ffmpeg-git-64bit-static.tar.xz | tar xfvJ - -C /usr/local/bin && \
+  apt-get install -y unrar-free lame mediainfo p7zip-full ffmpeg libav-tools
+
+# Install unrar
+RUN \
+  mkdir -p /tmp/new_unrar && cd /tmp/new_unrar && \
+  wget http://www.rarlab.com/rar/rarlinux-x64-5.5.0.tar.gz && \
+  tar -xzf rarlinux*.tar.gz && \
+  mv /usr/bin/unrar /usr/bin/unrar4 && \
+  mv rar/unrar /usr/bin/unrar && \
+  chmod 755 /usr/bin/unrar && \
+  cd / && rm -rf /tmp/new_unrar
+
+# Install yEnc
+RUN \
+  mkdir -p /tmp/yenc && cd /tmp/yenc && \
+  wget https://ayera.dl.sourceforge.net/project/yydecode/yydecode/0.2.10/yydecode-0.2.10.tar.gz && \
+  tar xzf yydecode-0.2.10.tar.gz && cd yydecode-0.2.10 && \
+  apt-get install -y gcc make && \
+  ./configure && make && make install && \
+  cd /tmp && \
+  rm -rf yenc && \
+  wget https://github.com/niel/php-yenc/releases/download/v1.3.0/php7.1-yenc_1.3.0_amd64.deb && \
+  apt-get -f install && \
+  dpkg -i php7.1-yenc_1.3.0_amd64.deb
+
+# Install tmux version 2
+RUN \
+  apt-get install -y libevent-dev build-essential git autotools-dev automake pkg-config ncurses-dev && \
+  apt remove -y tmux && \
+  cd /tmp && \
+  git clone https://github.com/tmux/tmux.git --branch 2.0 --single-branch && \
+  cd tmux && ./autogen.sh && ./configure && make -j4 && make install && make clean && \
+  cd / && rm -rf /tmp/tmux
+
+# Install certificates
+RUN \
+  wget -P /etc/ssl/certs/ http://curl.haxx.se/ca/cacert.pem && \
+  chmod 744 /etc/ssl/certs/cacert.pem
 
 # Install MariaDB.
 #RUN \
@@ -65,68 +137,35 @@ RUN \
   
   
 # Install Python MySQL modules.
-RUN \
-  apt-get install -y python-setuptools software-properties-common python3-setuptools python3-pip python-pip && \
-  python -m easy_install pip && \
-  easy_install cymysql && \
-  easy_install pynntp && \
-  easy_install socketpool && \
-  pip list && \
-  python3 -m easy_install pip && \
-  pip3 install cymysql && \
-  pip3 install pynntp && \
-  pip3 install socketpool && \
-  pip3 list
+#RUN \
+#  apt-get install -y python-setuptools software-properties-common python3-setuptools python3-pip python-pip && \
+#  python -m easy_install pip && \
+#  easy_install cymysql && \
+##  easy_install pynntp && \
+##  easy_install socketpool && \
+#  pip list && \
+#  python3 -m easy_install pip && \
+#  easy_install3 cymysql && \
+##  easy_install3 pynntp && \
+##  easy_install3 socketpool && \
+#  pip3 list
 
-# Install PHP.
-RUN \
-  add-apt-repository ppa:ondrej/php && \
-  apt-get update && \
-  apt-get install -y \
-  php5.6 \
-  php5.6-cli \
-  php5.6-dev \
-  php5.6-fpm \
-  php5.6-json \
-  php-pear \
-  php5.6-gd \
-  php5.6-mysql \
-  php5.6-pdo \
-  php5.6-curl \
-  php5.6-common \
-  php5.6-mcrypt \
-  php5.6-mbstring \
-  php5.6-xml \
-  php5.6-imagick
-
-# Configure PHP
-RUN \
-  sed -ri 's/(max_execution_time =) ([0-9]+)/\1 120/' /etc/php/5.6/cli/php.ini && \
-  sed -ri 's/(memory_limit =) ([0-9]+)/\1 -1/'  /etc/php/5.6/cli/php.ini && \
-  sed -ri 's/;(date.timezone =)/\1 Europe\/London/'  /etc/php/5.6/cli/php.ini && \
-  sed -ri 's/(max_execution_time =) ([0-9]+)/\1 120/' /etc/php/5.6/fpm/php.ini && \
-  sed -ri 's/(memory_limit =) ([0-9]+)/\1 1024/'  /etc/php/5.6/fpm/php.ini && \
-  sed -ri 's/;(date.timezone =)/\1 Europe\/London/' /etc/php/5.6/fpm/php.ini && \
-  mkdir /run/php && \
-  chmod -R 777 /var/lib/php/sessions && \
-  sed -i 's/^listen =.*/listen = 127.0.0.1:9000/' /etc/php/5.6/fpm/pool.d/www.conf
-  
 
 # Install simple_php_yenc_decode.
-RUN \
-  cd /tmp && \
-  git clone https://github.com/kevinlekiller/simple_php_yenc_decode.git && \
-  cd simple_php_yenc_decode/source/ && \
-  apt-get install -y swig libboost-regex-dev g++
+#RUN \
+#  cd /tmp && \
+#  git clone https://github.com/kevinlekiller/simple_php_yenc_decode.git && \
+#  cd simple_php_yenc_decode/source/ && \
+#  apt-get install -y swig libboost-regex-dev g++
 
-RUN \
-  cd /tmp/simple_php_yenc_decode/source/ && \
-  swig -php -c++ yenc_decode.i && \
-  g++ `php-config5.6 --includes` -fpic -c yenc_decode_wrap.cpp && \
-  g++ -fpic -c yenc_decode.cpp -lboost_rege && \
-  g++ -shared *.o -o simple_php_yenc_decode.so -lboost_regex && \
-  cd ~ && \
-  rm -rf /tmp/simple_php_yenc_decode/
+#RUN \
+#  cd /tmp/simple_php_yenc_decode/source/ && \
+#  swig -php -c++ yenc_decode.i && \
+#  g++ `php-config7.1 --includes` -fpic -c yenc_decode_wrap.cpp && \
+#  g++ -fpic -c yenc_decode.cpp -lboost_rege && \
+#  g++ -shared *.o -o simple_php_yenc_decode.so -lboost_regex && \
+#  cd ~ && \
+#  rm -rf /tmp/simple_php_yenc_decode/
 
 # Install memcached.
 RUN apt-get install -y memcached
@@ -178,11 +217,11 @@ ADD id_rsa.pub /tmp/key.pub
 RUN cat /tmp/key.pub >> /root/.ssh/authorized_keys && rm -f /tmp/key.pub
 
 # Update SSL CA bundles
-RUN \
-  update-ca-certificates && \
-  cd /etc/ssl/certs/ && \
-  wget https://curl.haxx.se/ca/cacert.pem && \
-  chmod -R 777 *
+#RUN \
+#  update-ca-certificates && \
+#  cd /etc/ssl/certs/ && \
+#  wget https://curl.haxx.se/ca/cacert.pem && \
+#  chmod -R 777 *
 
 # Define mountable directories
 VOLUME ["/etc/nginx/sites-enabled", "/var/log", "/var/www/nZEDb", "/var/lib/mysql"]
