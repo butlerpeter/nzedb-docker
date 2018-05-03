@@ -39,15 +39,15 @@ CMD ["/sbin/my_init"]
 
 # Make sure system is up-to-date.
 RUN \
-  sed -i 's/# \(.*multiverse$\)/\1/g' /etc/apt/sources.list && \
-  sed -i 's#http://archive.ubuntu.com/ubuntu#http://mirror.aarnet.edu.au/pub/ubuntu/archive#g' /etc/apt/sources.list && \
+#  sed -i 's/# \(.*multiverse$\)/\1/g' /etc/apt/sources.list && \
+#  sed -i 's#http://archive.ubuntu.com/ubuntu#http://mirror.aarnet.edu.au/pub/ubuntu/archive#g' /etc/apt/sources.list && \
   apt-get update && \
   apt-get -y upgrade && \
   apt-get -y dist-upgrade && \
   locale-gen en_US.UTF-8
 
 # Install base software.
-RUN apt-get install -y curl git htop man htop nmon vnstat tcptrack bwm-ng mytop software-properties-common python-software-properties unzip vim wget tmux ntp ntpdate time
+RUN apt-get install -y nano sudo curl git htop man htop nmon vnstat tcptrack bwm-ng mytop software-properties-common python-software-properties unzip vim wget tmux ntp ntpdate time
 
 # Install PHP.
 RUN \
