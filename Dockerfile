@@ -54,40 +54,41 @@ RUN \
   add-apt-repository ppa:ondrej/php && \
   apt-get update && \
   apt-get install -y \
-  php7.1 \
-  php7.1-cli \
-  php7.1-common \
-  php7.1-curl \
-  php7.1-dev \
-  php7.1-fpm \
-  php7.1-gd \
-  php7.1-json \
+  php7.0 \
+  php7.0-cli \
+  php7.0-common \
+  php7.0-curl \
+  php7.0-dev \
+  php7.0-fpm \
+  php7.0-gd \
+  php7.0-json \
   php-pear \
-  php7.1-mysql \
-  php7.1-pdo \
-  php7.1-mcrypt \
-  php7.1-mbstring \
-  php7.1-xml \
-  php7.1-imagick
+  php7.0-mysql \
+  php7.0-pdo \
+  php7.0-mcrypt \
+  php7.0-mbstring \
+  php7.0-xml \
+  php7.0-imagick
 
 
 # Configure PHP
 RUN \
-  sed -ri 's/(max_execution_time =) ([0-9]+)/\1 120/' /etc/php/7.1/cli/php.ini && \
-  sed -ri 's/(memory_limit =) ([0-9]+)/\1 -1/'  /etc/php/7.1/cli/php.ini && \
-  sed -ri 's/;(date.timezone =)/\1 Europe\/London/'  /etc/php/7.1/cli/php.ini && \
-  sed -ri 's/(max_execution_time =) ([0-9]+)/\1 120/' /etc/php/7.1/fpm/php.ini && \
-  sed -ri 's/(memory_limit =) ([0-9]+)/\1 1024/'  /etc/php/7.1/fpm/php.ini && \
-  sed -ri 's/;(date.timezone =)/\1 Europe\/London/' /etc/php/7.1/fpm/php.ini && \
+  sed -ri 's/(max_execution_time =) ([0-9]+)/\1 120/' /etc/php/7.0/cli/php.ini && \
+  sed -ri 's/(memory_limit =) ([0-9]+)/\1 -1/'  /etc/php/7.0/cli/php.ini && \
+  sed -ri 's/;(date.timezone =)/\1 Europe\/London/'  /etc/php/7.0/cli/php.ini && \
+  sed -ri 's/(max_execution_time =) ([0-9]+)/\1 120/' /etc/php/7.0/fpm/php.ini && \
+  sed -ri 's/(memory_limit =) ([0-9]+)/\1 1024/'  /etc/php/7.0/fpm/php.ini && \
+  sed -ri 's/;(date.timezone =)/\1 Europe\/London/' /etc/php/7.0/fpm/php.ini && \
   mkdir /run/php && \
   chmod -R 777 /var/lib/php/sessions && \
-  sed -i 's/^listen =.*/listen = 127.0.0.1:9000/' /etc/php/7.1/fpm/pool.d/www.conf
+  sed -i 's/^listen =.*/listen = 127.0.0.1:9000/' /etc/php/7.0/fpm/pool.d/www.conf
 
 
 # Install ffmpeg, mediainfo, p7zip-full, unrar and lame.
 RUN \
-#  curl https://johnvansickle.com/ffmpeg/builds/ffmpeg-git-64bit-static.tar.xz | tar xfvJ - -C /usr/local/bin && \
+  curl https://johnvansickle.com/ffmpeg/builds/ffmpeg-git-64bit-static.tar.xz | tar xfvJ - -C /usr/local/bin && \
   apt-get install -y unrar-free lame mediainfo p7zip-full ffmpeg libav-tools
+#  apt-get install -y unrar-free lame mediainfo p7zip-full libav-tools
 
 # Install unrar
 RUN \
@@ -108,9 +109,9 @@ RUN \
   ./configure && make && make install && \
   cd /tmp && \
   rm -rf yenc && \
-  wget https://github.com/niel/php-yenc/releases/download/v1.3.0/php7.1-yenc_1.3.0_amd64.deb && \
+  wget https://github.com/niel/php-yenc/releases/download/v1.3.0/php7.0-yenc_1.3.0_amd64.deb && \
   apt-get -f install && \
-  dpkg -i php7.1-yenc_1.3.0_amd64.deb
+  dpkg -i php7.0-yenc_1.3.0_amd64.deb
 
 # Install tmux version 2
 RUN \
@@ -203,8 +204,8 @@ RUN \
 # Add services.
 RUN mkdir /etc/service/nginx
 ADD nginx.sh /etc/service/nginx/run
-RUN mkdir /etc/service/php7.1-fpm && mkdir /var/log/php7.1-fpm
-ADD php7.1-fpm.sh /etc/service/php7.1-fpm/run
+RUN mkdir /etc/service/php7.0-fpm && mkdir /var/log/php-fpm
+ADD php-fpm.sh /etc/service/php7.0-fpm/run
 #RUN mkdir /etc/service/mariadb
 #ADD mariadb.sh /etc/service/mariadb/run
 
